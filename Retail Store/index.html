@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retail Store Replenishment & Demand Planning System</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for clean, modern typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN for Demand Forecasting Visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Top Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <span class="brand-icon">📦</span>
+                <div>
+                    <h1>SmartReplenish</h1>
+                    <p class="subtitle">Retail Store Replenishment & Demand Planning Dashboard</p>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-secondary" id="btn-simulate-day" title="Simulate 1 day of customer sales">
+                    ⚡ Simulate Day Sales
+                </button>
+                <button class="btn btn-primary" id="btn-open-add-modal">
+                    + Add Product SKU
+                </button>
+                <button class="btn btn-outline" id="btn-reset-data" title="Restore sample demo data">
+                    🔄 Reset Data
+                </button>
+
+                <!-- Logged In User Profile & Logout -->
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-avatar">👤</div>
+                    <div class="user-info">
+                        <span class="user-name" id="user-display-name">Store Manager</span>
+                        <span class="user-role" id="user-display-role">Operations Admin</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="btn-logout" title="Sign out of system">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main App Container -->
+    <main class="main-container">
+
+        <!-- KPI Summary Cards -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon icon-blue">🏷️</div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Active SKUs</span>
+                    <h3 class="kpi-value" id="kpi-total-skus">0</h3>
+                    <span class="kpi-subtext">Catalog items tracked</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-amber">⚠️</div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Reorder Required</span>
+                    <h3 class="kpi-value text-amber" id="kpi-reorder-count">0</h3>
+                    <span class="kpi-subtext">Stock at or below ROP</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-red">🚨</div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Stockout / Critical</span>
+                    <h3 class="kpi-value text-red" id="kpi-stockout-count">0</h3>
+                    <span class="kpi-subtext">Zero or emergency level</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon icon-green">💰</div>
+                <div class="kpi-details">
+                    <span class="kpi-label">Total Inventory Value</span>
+                    <h3 class="kpi-value text-green" id="kpi-total-value">$0</h3>
+                    <span class="kpi-subtext">Current stock valuation</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="tab-inventory">📋 Inventory & Replenishment</button>
+            <button class="tab-btn" data-tab="tab-demand">📈 Demand Forecasting & Planning</button>
+            <button class="tab-btn" data-tab="tab-orders">🚚 Purchase Orders (<span id="po-badge-count">0</span>)</button>
+            <button class="tab-btn" data-tab="tab-theory">📖 Supply Chain Formulas</button>
+        </nav>
+
+        <!-- TAB 1: Inventory & Replenishment Monitor -->
+        <section id="tab-inventory" class="tab-content active">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Inventory Stock & Replenishment Status</h2>
+                        <p class="panel-desc">Real-time stock monitoring with automated Reorder Point (ROP) & EOQ alerts</p>
+                    </div>
+                    <div class="table-filters">
+                        <input type="text" id="inventory-search" placeholder="Search by SKU or Name..." class="form-control">
+                        <select id="inventory-filter" class="form-control">
+                            <option value="all">All Items</option>
+                            <option value="reorder">Needs Reorder (ROP Triggered)</option>
+                            <option value="critical">Critical / Stockout</option>
+                            <option value="healthy">Healthy Stock</option>
+                        </select>
+                        <button class="btn btn-outline" id="btn-export-csv" title="Export inventory report as CSV">
+                            📥 Export CSV
+                        </button>
+                        <button class="btn btn-success" id="btn-auto-replenish-all">
+                            ✨ Auto-Generate Replenishment
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>SKU & Name</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Avg Daily Demand</th>
+                                <th>Lead Time</th>
+                                <th>Safety Stock</th>
+                                <th>Reorder Point (ROP)</th>
+                                <th>EOQ (Batch Size)</th>
+                                <th>Stock Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-table-body">
+                            <!-- Populated dynamically via app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: Demand Forecasting & Planning -->
+        <section id="tab-demand" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Demand Forecasting & Trend Analysis</h2>
+                        <p class="panel-desc">Predict future weekly demand using 7-day Simple Moving Average (SMA) & trend factors</p>
+                    </div>
+                    <div class="forecast-controls">
+                        <label for="forecast-sku-select"><strong>Select Product:</strong></label>
+                        <select id="forecast-sku-select" class="form-control">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Forecast Metrics Card Grid -->
+                <div class="forecast-insights-grid">
+                    <div class="insight-box">
+                        <span class="insight-title">Past 7 Days Avg Daily Sales</span>
+                        <h4 id="fc-avg-daily">0 units/day</h4>
+                    </div>
+                    <div class="insight-box">
+                        <span class="insight-title">Forecasted 7-Day Demand</span>
+                        <h4 id="fc-weekly-demand" class="text-blue">0 units</h4>
+                    </div>
+                    <div class="insight-box">
+                        <span class="insight-title">Suggested Safety Buffer</span>
+                        <h4 id="fc-safety-buffer">0 units</h4>
+                    </div>
+                    <div class="insight-box">
+                        <span class="insight-title">Recommended Restock Target</span>
+                        <h4 id="fc-recommended-order" class="text-green">0 units</h4>
+                    </div>
+                </div>
+
+                <!-- Sensitivity / Scenario Adjustment -->
+                <div class="scenario-planner-box">
+                    <div class="scenario-header">
+                        <h3>⚡ Demand Planning Scenario Adjuster</h3>
+                        <span class="badge badge-info">What-If Analysis</span>
+                    </div>
+                    <p class="scenario-desc">Simulate upcoming marketing campaigns, holiday peaks, or season dips to adjust projected demand:</p>
+                    <div class="slider-group">
+                        <label for="demand-multiplier-slider">
+                            Demand Growth / Surge Factor: <strong id="multiplier-display">1.0x (Normal)</strong>
+                        </label>
+                        <input type="range" id="demand-multiplier-slider" min="0.5" max="2.5" step="0.1" value="1.0" class="slider">
+                        <div class="slider-labels">
+                            <span>-50% (Sluggish)</span>
+                            <span>Baseline (1.0x)</span>
+                            <span>+50% (Festive Surge)</span>
+                            <span>+150% (Flash Sale)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Forecast Chart -->
+                <div class="chart-wrapper">
+                    <canvas id="demandChart" height="110"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: Purchase Orders & Vendor Replenishment -->
+        <section id="tab-orders" class="tab-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Purchase Orders & Vendor Replenishment</h2>
+                        <p class="panel-desc">Manage generated replenishment purchase orders and simulate physical stock receipt</p>
+                    </div>
+                    <button class="btn btn-primary" id="btn-create-manual-po">
+                        + Create Manual Order
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>PO Number</th>
+                                <th>Created Date</th>
+                                <th>Product SKU & Name</th>
+                                <th>Order Quantity</th>
+                                <th>Estimated Cost</th>
+                                <th>Expected Days</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="po-table-body">
+                            <!-- Populated dynamically via app.js -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: Theoretical Formulas & Methodology (Great for Teacher Viva / Oral Presentation) -->
+        <section id="tab-theory" class="tab-content">
+            <div class="panel">
+                <h2>Supply Chain & Retail Operations Reference Guide</h2>
+                <p class="panel-desc">Standard mathematical models and algorithms implemented in this project</p>
+
+                <div class="formula-grid">
+                    <div class="formula-card">
+                        <div class="formula-badge">Formula 1</div>
+                        <h3>Reorder Point (ROP)</h3>
+                        <div class="formula-box">
+                            <code>ROP = (Average Daily Demand × Lead Time) + Safety Stock</code>
+                        </div>
+                        <p><strong>Definition:</strong> The predetermined inventory level that signals the purchase of additional stock to avoid stockouts while waiting for supplier delivery.</p>
+                        <ul>
+                            <li><strong>Lead Time:</strong> Days required for delivery after placing order.</li>
+                            <li><strong>Safety Stock:</strong> Buffer stock to absorb unexpected demand spikes.</li>
+                        </ul>
+                    </div>
+
+                    <div class="formula-card">
+                        <div class="formula-badge">Formula 2</div>
+                        <h3>Economic Order Quantity (EOQ)</h3>
+                        <div class="formula-box">
+                            <code>EOQ = √ [ (2 × D × S) / H ]</code>
+                        </div>
+                        <p><strong>Definition:</strong> The ideal order quantity that minimizes the total annual inventory costs (ordering cost + holding/carrying cost).</p>
+                        <ul>
+                            <li><strong>D:</strong> Annual Demand (Units)</li>
+                            <li><strong>S:</strong> Fixed Order Cost per order ($)</li>
+                            <li><strong>H:</strong> Annual Holding Cost per unit ($)</li>
+                        </ul>
+                    </div>
+
+                    <div class="formula-card">
+                        <div class="formula-badge">Formula 3</div>
+                        <h3>Safety Stock (SS)</h3>
+                        <div class="formula-box">
+                            <code>Safety Stock = (Max Daily Demand × Max Lead Time) - (Avg Daily Demand × Avg Lead Time)</code>
+                        </div>
+                        <p><strong>Simplified Model:</strong> A buffer maintained to mitigate risks of stockouts caused by uncertainties in supply and demand.</p>
+                    </div>
+
+                    <div class="formula-card">
+                        <div class="formula-badge">Formula 4</div>
+                        <h3>Moving Average Demand Forecast</h3>
+                        <div class="formula-box">
+                            <code>Forecast Demand (t+1) = (Sales Day 1 + ... + Sales Day N) / N</code>
+                        </div>
+                        <p><strong>Definition:</strong> Smoothes short-term demand fluctuations and highlights baseline trends over a rolling 7-day sales window.</p>
+                    </div>
+                </div>
+
+                <div class="explanation-callout">
+                    <h4>💡 How Replenishment Automation Works in this System:</h4>
+                    <p>
+                        Every time sales occur, the current stock decreases. The system constantly compares <strong>Current Stock</strong> against the calculated <strong>Reorder Point (ROP)</strong>.
+                        When <code>Current Stock ≤ ROP</code>, the item is flagged with a warning.
+                        The automated replenishment order quantity defaults to the item's calculated <strong>EOQ (Economic Order Quantity)</strong> or replenishment up to the maximum warehouse target stock.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: Add New SKU -->
+    <div class="modal" id="modal-add-sku">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add New Retail Product SKU</h3>
+                    <button class="modal-close" data-close="modal-add-sku">&times;</button>
+                </div>
+                <form id="form-add-sku">
+                    <div class="modal-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sku-code">SKU Code *</label>
+                                <input type="text" id="sku-code" class="form-control" placeholder="e.g. BEV-105" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sku-name">Product Name *</label>
+                                <input type="text" id="sku-name" class="form-control" placeholder="e.g. Green Tea 250g" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sku-category">Category *</label>
+                                <select id="sku-category" class="form-control" required>
+                                    <option value="Groceries">Groceries</option>
+                                    <option value="Dairy & Bakery">Dairy & Bakery</option>
+                                    <option value="Beverages">Beverages</option>
+                                    <option value="Personal Care">Personal Care</option>
+                                    <option value="Packaged Foods">Packaged Foods</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sku-price">Unit Cost ($/₹) *</label>
+                                <input type="number" id="sku-price" class="form-control" step="0.01" min="0.1" placeholder="e.g. 4.50" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sku-stock">Current Stock *</label>
+                                <input type="number" id="sku-stock" class="form-control" min="0" placeholder="e.g. 50" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sku-demand">Avg Daily Demand *</label>
+                                <input type="number" id="sku-demand" class="form-control" min="1" placeholder="e.g. 8" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sku-leadtime">Supplier Lead Time (Days) *</label>
+                                <input type="number" id="sku-leadtime" class="form-control" min="1" placeholder="e.g. 3" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="sku-safetystock">Safety Stock Buffer *</label>
+                                <input type="number" id="sku-safetystock" class="form-control" min="0" placeholder="e.g. 10" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-close="modal-add-sku">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Purchase Order (Restock) -->
+    <div class="modal" id="modal-create-po">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Generate Purchase Order</h3>
+                    <button class="modal-close" data-close="modal-create-po">&times;</button>
+                </div>
+                <form id="form-create-po">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="po-sku-select">Select Product SKU *</label>
+                            <select id="po-sku-select" class="form-control" required>
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <div class="po-info-box" id="po-sku-summary">
+                            <!-- Populated dynamically with current stock, ROP, suggested EOQ -->
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="po-quantity">Order Quantity (Units) *</label>
+                                <input type="number" id="po-quantity" class="form-control" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="po-supplier">Supplier Name</label>
+                                <input type="text" id="po-supplier" class="form-control" value="Primary Retail Distributor">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" data-close="modal-create-po">Cancel</button>
+                        <button type="submit" class="btn btn-success">Issue Purchase Order</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

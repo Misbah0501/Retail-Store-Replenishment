@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartReplenish Retail Portal</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="login-body">
+
+    <div class="login-card">
+        <!-- Brand Header -->
+        <div class="login-brand">
+            <div class="brand-icon">📦</div>
+            <h1>SmartReplenish</h1>
+            <p>Retail Replenishment & Demand Planning Portal</p>
+        </div>
+
+        <!-- Alert for Invalid Credentials -->
+        <div id="login-alert" class="login-alert">
+            Invalid username or password. Please try again.
+        </div>
+
+        <!-- Login Form -->
+        <form id="form-login" class="login-form">
+            <div class="form-group">
+                <label for="username">Username / Employee ID *</label>
+                <input 
+                    type="text" 
+                    id="username" 
+                    class="form-control" 
+                    placeholder="e.g. admin or planner" 
+                    autocomplete="username" 
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <div class="password-wrapper">
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-control" 
+                        placeholder="Enter your password" 
+                        autocomplete="current-password" 
+                        required
+                    >
+                    <button type="button" id="btn-toggle-password" class="btn-toggle-pw" title="Show / Hide Password">
+                        👁️
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="user-role-select">Access Role *</label>
+                <select id="user-role-select" class="form-control" required>
+                    <option value="Store Operations Manager">Store Operations Manager</option>
+                    <option value="Demand Planning Specialist">Demand Planning Specialist</option>
+                    <option value="Supply Chain Analyst">Supply Chain Analyst</option>
+                </select>
+            </div>
+
+            <div class="login-options">
+                <label class="remember-label">
+                    <input type="checkbox" id="remember-me" checked>
+                    <span>Remember me on this browser</span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-login-submit" id="btn-submit-login">
+                Sign In to Dashboard →
+            </button>
+        </form>
+
+        <!-- Quick Demo Login Helpers for Teacher/Sir Evaluation -->
+        <div class="demo-accounts-box">
+            <div class="demo-title">
+                <span>⚡ Quick Demo Login (1-Click)</span>
+                <span style="font-weight: normal; font-size: 0.7rem; color: var(--primary);">Evaluation Mode</span>
+            </div>
+            <div class="demo-grid">
+                <button type="button" class="demo-account-btn" id="btn-demo-admin">
+                    <span class="demo-account-name">👨‍💼 Store Manager</span>
+                    <span class="demo-account-role">User: <code>admin</code></span>
+                </button>
+                <button type="button" class="demo-account-btn" id="btn-demo-planner">
+                    <span class="demo-account-name">📈 Demand Planner</span>
+                    <span class="demo-account-role">User: <code>planner</code></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="login-footer">
+            Retail Store Inventory & Demand Planning System<br>
+            Developed with pure HTML5, CSS3 & JavaScript
+        </div>
+    </div>
+
+    <!-- Login Logic -->
+    <script src="login.js"></script>
+</body>
+</html>
